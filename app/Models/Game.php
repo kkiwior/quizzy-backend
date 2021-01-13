@@ -5,16 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Passport\HasApiTokens;
 
-class Question extends Model
+class Game extends Model
 {
     use HasApiTokens;
 
-    protected $fillable = [
-        'question',
-        'answers',
-    ];
+    protected $hidden = ['updated_at', 'user_id', 'questions_queue'];
 
-    protected $hidden = ['id', 'quiz_id', 'created_at', 'updated_at'];
+
+    public function user()
+    {
+        return $this->hasMany(User::User);
+    }
 
     public function quiz()
     {

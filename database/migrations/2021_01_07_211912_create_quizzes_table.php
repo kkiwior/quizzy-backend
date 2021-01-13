@@ -21,6 +21,7 @@ class CreateQuizzesTable extends Migration
             $table->boolean('anonymous');
             $table->boolean('reentry');
             $table->integer('time');
+            $table->integer('questions_count');
             $table->unsignedBigInteger('creator_id');
             $table->timestamps();
             $table->foreign('creator_id')->references('id')->on('users');
