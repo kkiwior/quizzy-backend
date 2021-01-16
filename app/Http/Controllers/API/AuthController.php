@@ -16,9 +16,9 @@ class AuthController extends Controller
             'name' => 'required|min:3|max:32|unique:users',
             'email' => 'email|required|unique:users',
             'password' => 'required|confirmed|min:6|max:32'
-        ], [
-            'name.unique' => 'Nazwa użytkownika jest zajęta.',
-            'email.unique'=> 'Email jest zajęty.'
+        ], [], [
+            'name' => 'nazwa użytkownika',
+            'password' => 'hasło'
         ]);
 
         if($validator->fails()) return response()->json($validator->messages(), 422);
@@ -29,7 +29,7 @@ class AuthController extends Controller
 
         $accessToken = $user->createToken('authToken')->accessToken;
 
-        return response([ 'user' => $user, 'access_token' => $accessToken]);
+        return response([ 'user' => $user, 'access_token' => $accessToken], 200);
     }
 
     public function login(Request $request)
@@ -43,19 +43,19 @@ class AuthController extends Controller
 
         $accessToken = auth()->user()->createToken('authToken')->accessToken;
 
-        return response(['user' => auth()->user(), 'access_token' => $accessToken]);
+        return response(['user' => auth()->user(), 'access_token' => $accessToken], 200);
     }
 
-    public function uploadAvatar(Request $request) {
-        if(!$request->hasFile("image")) return response()->json(['Wystąpił problem podczas wgrywania pliku.'], 400);
+    public function uploadAvatar(Request $request)
+    {
+        if(!$request->hasFile("image")) return abort(400);
         $file = $request->file("image");
-        if(!$file->isValid()) return response()->json(['Niepoprawny plik.'], 400);
+        if(!$file->isValid()) return abort(400);
         $path = public_path() . '/uploads/images/avatars/';
         $user = auth()->user();
-
         $name = $user->name . substr(Str::uuid()->toString(), 0, 8) . '.' . $file->extension();
         $file->move($path, $name);
-        $user->avatar = $name;
+        $user->avatar = 'http://localhost:8000/uploads/images/avatars/' . $name;
         $user->save();
 
         return response()->json(['avatar' => $user->avatar], 200);

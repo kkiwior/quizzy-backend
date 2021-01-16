@@ -18,6 +18,7 @@ class CreateQuestionsTable extends Migration
             $table->unsignedBigInteger('quiz_id');
             $table->string('question');
             $table->json('answers');
+            $table->integer('order');
             $table->timestamps();
             $table->foreign('quiz_id')->references('id')->on('quizzes')->onDelete('cascade');
         });

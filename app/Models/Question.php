@@ -12,9 +12,10 @@ class Question extends Model
     protected $fillable = [
         'question',
         'answers',
+        'order'
     ];
 
-    protected $hidden = ['id', 'quiz_id', 'created_at', 'updated_at'];
+    protected $hidden = ['quiz_id', 'created_at', 'updated_at', 'order'];
 
     public function quiz()
     {

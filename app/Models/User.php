@@ -30,8 +30,11 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'email',
         'email_verified_at',
-        'updated_at'
+        'updated_at',
+        'created_at',
+        'id'
     ];
 
     /**
@@ -42,11 +45,6 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-
-    public function getAvatarAttribute($value)
-    {
-        return 'http://localhost:8000/uploads/images/avatars/' . $value;
-    }
 
     public function findForPassport($name){
         return $this->where('email', $name->orWhere('username', $name)->first());

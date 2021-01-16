@@ -16,6 +16,7 @@ class CreateQuizzesTable extends Migration
         Schema::create('quizzes', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('thumbnail')->nullable();
             $table->boolean('shuffle');
             $table->boolean('public');
             $table->boolean('anonymous');

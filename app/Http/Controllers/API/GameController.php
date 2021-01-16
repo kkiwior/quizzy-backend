@@ -8,7 +8,6 @@ use App\Models\Question;
 use App\Models\Game;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 
 class GameController extends Controller
@@ -40,12 +39,26 @@ class GameController extends Controller
         $game->questions_queue = json_encode($questionsOrder);
         $game->save();
 
-        return response([ 'game' => $game, 'question' => $this->nextQuestion($game) ]);
+        return response([ 'game' => $game, 'question' => $this->nextQuestion($game) ], 200);
     }
 
     public function answer(Request $request)
     {
-        $game::find($request->route('id'));
+        $game = Game::find($request->route('id'));
+
+        if(($game->user_id ?? null) != (Auth::guard('api')->user()->id ?? null)) return abort (403);
+
+        $answer = $request->input('answer');
+        $correctAnswers = json_decode($game->correct_answers_id);
+
+        if($answer != 0 && (strtotime(date("Y-m-d h:i:s")) - strtotime($game->updated_at))/60 < ($game->load('quiz')->time + 5))
+        {
+            if(in_array($answer, $correctAnswers)) $game->correctAnswers++;
+        }
+
+        if(strlen($game->questions_queue) > 2) return response([ 'correct' => $correctAnswers, 'question' => $this->nextQuestion($game) ], 200);
+        $game->save();
+        return response([ 'correct' => $correctAnswers, 'finish' => $game->correctAnswers ], 200);
     }
 
 
@@ -54,10 +67,16 @@ class GameController extends Controller
         $questions = json_decode($game->questions_queue);
         $qid = array_shift($questions);
         $game->questions_queue = json_encode($questions);
-        $game->save();
         $question = Question::find($qid);
-        $question->answers = json_decode(Str::of($question->answers)->replaceMatches('/,\\"correct\\":((false)|(true))/', ''), true);
-
+        $answers = json_decode($question->answers, true);
+        $correct = [];
+        foreach($answers as &$answer){
+            if($answer["correct"]) $correct[] = $answer["id"];
+            unset($answer["correct"]);
+        }
+        $question->answers = $answers;
+        $game->correct_answers_id = json_encode($correct);
+        $game->save();
         return $question;
     }
 }
