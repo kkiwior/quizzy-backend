@@ -53,6 +53,7 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost'),
+    'cdn' => env('APP_CDN', '/uploads/images/'),
 
     'asset_url' => env('ASSET_URL', null),
 

@@ -138,12 +138,13 @@ class QuizController extends Controller
         if (!$request->hasFile("image")) return abort(400);
         $file = $request->file("image");
         if (!$file->isValid()) return abort(400);
-        $path = public_path() . '/uploads/images/thumbnails/';
+        if (exif_imagetype($file) !== IMAGETYPE_WEBP) return abort(400);
+        $path = public_path() . config('app.cdn') . 'thumbnails/';
 
         $name = auth()->user()->name . substr(Str::uuid()->toString(), 0, 16) . '.' . $file->extension();
         $file->move($path, $name);
 
-        return response()->json(['thumbnail' => 'http://localhost:8000/uploads/images/thumbnails/' . $name], 200);
+        return response()->json(['thumbnail' => config('app.url') . config('app.cdn') . 'thumbnails/' . $name], 200);
     }
 
     public function getRanking(Request $request)
@@ -155,16 +156,16 @@ class QuizController extends Controller
     public function rules()
     {
         return [
-            'name' => 'required|min:5|max:128',
+            'name' => 'required|min:5|max:255',
             'shuffle' => 'boolean|required',
             'public' => 'boolean|required',
             'anonymous' => 'boolean|required',
             'reentry' => 'boolean|required',
             'time' => 'integer|required',
             'questions' => 'array|required',
-            'questions.*.text' => 'required|string|min:3|max:200',
+            'questions.*.text' => 'required|string|min:3|max:255',
             'questions.*.answers' => new RequireCorrect,
-            'questions.*.answers.*.text' => 'required|string|min:2|max:100',
+            'questions.*.answers.*.text' => 'required|string|min:2|max:200',
             'questions.*.answers.*.correct' => 'boolean|required'
         ];
     }

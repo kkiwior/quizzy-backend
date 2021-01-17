@@ -51,11 +51,12 @@ class AuthController extends Controller
         if (!$request->hasFile("image")) return abort(400);
         $file = $request->file("image");
         if (!$file->isValid()) return abort(400);
-        $path = public_path() . '/uploads/images/avatars/';
+        if (exif_imagetype($file) !== IMAGETYPE_WEBP) return abort(400);
+        $path = public_path() . config('app.cdn') . 'avatars/';
         $user = auth()->user();
         $name = $user->name . substr(Str::uuid()->toString(), 0, 8) . '.' . $file->extension();
         $file->move($path, $name);
-        $user->avatar = 'http://localhost:8000/uploads/images/avatars/' . $name;
+        $user->avatar = config('app.url') . config('app.cdn') . 'avatars/' . $name;
         $user->save();
 
         return response()->json(['avatar' => $user->avatar], 200);

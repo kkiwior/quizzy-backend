@@ -68,6 +68,7 @@ class GameController extends Controller
 
         if (!is_null($game->questions_queue)) return response(['correct' => $correctAnswers, 'question' => $this->nextQuestion($game)], 200);
         Redis::del('game:' . $game->uid);
+        if($game->user_id=='') $game->user_id = null;
         unset($game->uid);
         unset($game->questions_queue);
         unset($game->correct_answers_id);
@@ -99,7 +100,7 @@ class GameController extends Controller
         $r = Redis::hgetall('game:' . $key);
         if (empty($r)) return false;
         $game->uid = $key;
-        $game->user_id = $r["user_id"];
+        $game->user_id = $r["user_id"] ?? null;
         $game->quiz_id = $r["quiz_id"];
         $game->questions_queue = (strlen($r["questions_queue"]) > 2 ? json_decode($r["questions_queue"], true) : null);
         $game->correctAnswers = $r["correctAnswers"];
