@@ -18,7 +18,7 @@ class QuizController extends Controller
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(), $this->rules(), [], $this->niceNames());
-        if($validator->fails()) return response()->json($validator->messages(), 422);
+        if ($validator->fails()) return response()->json($validator->messages(), 422);
 
         $quiz = new Quiz();
         $quiz->name = $request->input('name');
@@ -33,36 +33,35 @@ class QuizController extends Controller
         $quiz->save();
 
         $i = 0;
-        foreach($request->input('questions') as $questionRequest)
-        {
+        foreach ($request->input('questions') as $questionRequest) {
             $question = new Question();
             $question->order = ++$i;
             $question->question = $questionRequest["text"];
             $id = 0;
-            foreach($questionRequest["answers"] as &$answer) $answer["id"] = ++$id;
+            foreach ($questionRequest["answers"] as &$answer) $answer["id"] = ++$id;
             $question->answers = json_encode($questionRequest["answers"]);
             $quiz->questions()->save($question);
         }
 
-        return response([ 'quiz_id' => $quiz->id ], 200);
+        return response(['quiz_id' => $quiz->id], 200);
     }
 
     public function read(Request $request)
     {
         $quiz = Quiz::find($request->route('id'));
-        if($quiz == null) return abort(400);
+        if ($quiz == null) return abort(404);
 
-        if($request->query('edit') && Auth::guard('api')->user()->id == $quiz->creator_id) $quiz->load('questions');
+        if ($request->query('edit') && Auth::guard('api')->user()->id == $quiz->creator_id) $quiz->load('questions');
         return response(['quiz' => $quiz->load('creator')], 200);
     }
 
     public function update(Request $request)
     {
         $quiz = Quiz::find($request->route('id'));
-        if($quiz->creator_id != auth()->user()->id) abort(401);
+        if ($quiz->creator_id != auth()->user()->id) abort(401);
 
         $validator = Validator::make($request->all(), $this->rules(), [], $this->niceNames());
-        if($validator->fails()) return response()->json($validator->messages(), 422);
+        if ($validator->fails()) return response()->json($validator->messages(), 422);
 
         $quiz->name = $request->input('name');
         $quiz->thumbnail = $request->input('thumbnail');
@@ -75,21 +74,18 @@ class QuizController extends Controller
         $quiz->save();
 
         $quiz->load('questions');
-        foreach($quiz->questions as $question)
-        {
+        foreach ($quiz->questions as $question) {
             $deleted = true;
-            foreach($request->input('questions') as $questionRequest)
-            {
-                if($question->id == ($questionRequest["id"] ?? null)) $deleted = false;
+            foreach ($request->input('questions') as $questionRequest) {
+                if ($question->id == ($questionRequest["id"] ?? null)) $deleted = false;
             }
-            if($deleted) $question->delete();
+            if ($deleted) $question->delete();
         }
 
         $i = 0;
-        foreach($request->input('questions') as $questionRequest)
-        {
+        foreach ($request->input('questions') as $questionRequest) {
             $id = 0;
-            foreach($questionRequest["answers"] as &$answer) $answer["id"] = ++$id;
+            foreach ($questionRequest["answers"] as &$answer) $answer["id"] = ++$id;
             $quiz->questions()->updateOrCreate(['id' => $questionRequest["id"] ?? null], [
                 'order' => ++$i,
                 'question' => $questionRequest["text"],
@@ -97,13 +93,13 @@ class QuizController extends Controller
             ]);
         }
 
-        return response([ 'quiz_id' => $quiz->id ], 200);
+        return response(['quiz_id' => $quiz->id], 200);
     }
 
     public function delete(Request $request)
     {
         $quiz = Quiz::find($request->query('id'));
-        if($quiz->creator_id != auth()->user()->id) return abort(401);
+        if ($quiz->creator_id != auth()->user()->id) return abort(401);
         $quiz->delete();
         return $this->getUserQuizzes($request);
     }
@@ -112,13 +108,12 @@ class QuizController extends Controller
     {
         $isLogged = Auth::guard('api')->user() == null ? false : true;
         $quizzes = Quiz::withCount('game');
-        if(!$isLogged)
+        if (!$isLogged)
             $quizzes->where('public', '0');
 
-        if($request->query('search')) $quizzes->where('name', 'like', '%' . $request->query('search') . '%');
+        if ($request->query('search')) $quizzes->where('name', 'like', '%' . $request->query('search') . '%');
 
-        switch($request->query('sort'))
-        {
+        switch ($request->query('sort')) {
             case 'popular':
                 $quizzes->orderBy('game_count', $request->query('order') ?? 'DESC');
                 break;
@@ -138,10 +133,11 @@ class QuizController extends Controller
         return response(['quizzes' => $quizzes->makeHidden(['created_at', 'questions_count', 'shuffle', 'public', 'anonymous', 'reentry', 'time']), 'pages' => $quizzes->lastPage()], 200);
     }
 
-    public function uploadThumbnail(Request $request) {
-        if(!$request->hasFile("image")) return abort(400);
+    public function uploadThumbnail(Request $request)
+    {
+        if (!$request->hasFile("image")) return abort(400);
         $file = $request->file("image");
-        if(!$file->isValid()) return abort(400);
+        if (!$file->isValid()) return abort(400);
         $path = public_path() . '/uploads/images/thumbnails/';
 
         $name = auth()->user()->name . substr(Str::uuid()->toString(), 0, 16) . '.' . $file->extension();
@@ -150,9 +146,10 @@ class QuizController extends Controller
         return response()->json(['thumbnail' => 'http://localhost:8000/uploads/images/thumbnails/' . $name], 200);
     }
 
-    public function getRanking(Request $request){
+    public function getRanking(Request $request)
+    {
         $games = Game::where('quiz_id', $request->route('id'))->orderBy('correctAnswers', 'DESC')->limit(10)->get()->makeHidden(['id', 'quiz_id'])->load('user');
-        return response()->json(['ranking' => $games ], 200);
+        return response()->json(['ranking' => $games], 200);
     }
 
     public function rules()
@@ -165,9 +162,9 @@ class QuizController extends Controller
             'reentry' => 'boolean|required',
             'time' => 'integer|required',
             'questions' => 'array|required',
-            'questions.*.text' => 'required|string',
+            'questions.*.text' => 'required|string|min:3|max:200',
             'questions.*.answers' => new RequireCorrect,
-            'questions.*.answers.*.text' => 'required|string',
+            'questions.*.answers.*.text' => 'required|string|min:2|max:100',
             'questions.*.answers.*.correct' => 'boolean|required'
         ];
     }

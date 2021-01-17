@@ -13,15 +13,15 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|min:3|max:32|unique:users',
+            'name' => 'required|min:3|max:32|unique:users|string',
             'email' => 'email|required|unique:users',
-            'password' => 'required|confirmed|min:6|max:32'
+            'password' => 'required|confirmed|min:6|max:32|string'
         ], [], [
             'name' => 'nazwa użytkownika',
             'password' => 'hasło'
         ]);
 
-        if($validator->fails()) return response()->json($validator->messages(), 422);
+        if ($validator->fails()) return response()->json($validator->messages(), 422);
 
         $request->merge(['password' => bcrypt($request->password)]);
 
@@ -29,17 +29,17 @@ class AuthController extends Controller
 
         $accessToken = $user->createToken('authToken')->accessToken;
 
-        return response([ 'user' => $user, 'access_token' => $accessToken], 200);
+        return response(['user' => $user, 'access_token' => $accessToken], 200);
     }
 
     public function login(Request $request)
     {
         $loginData = $request->validate([
-           'name' => 'required',
-           'password' => 'required'
+            'name' => 'required',
+            'password' => 'required'
         ]);
 
-        if(!auth()->attempt($loginData)) return response()->json(['password' => 'Niepoprawne dane logowania.'], 422);
+        if (!auth()->attempt($loginData)) return response()->json(['password' => 'Niepoprawne dane logowania.'], 422);
 
         $accessToken = auth()->user()->createToken('authToken')->accessToken;
 
@@ -48,9 +48,9 @@ class AuthController extends Controller
 
     public function uploadAvatar(Request $request)
     {
-        if(!$request->hasFile("image")) return abort(400);
+        if (!$request->hasFile("image")) return abort(400);
         $file = $request->file("image");
-        if(!$file->isValid()) return abort(400);
+        if (!$file->isValid()) return abort(400);
         $path = public_path() . '/uploads/images/avatars/';
         $user = auth()->user();
         $name = $user->name . substr(Str::uuid()->toString(), 0, 8) . '.' . $file->extension();

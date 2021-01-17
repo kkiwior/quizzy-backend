@@ -17,9 +17,7 @@ class CreateGamesTable extends Migration
             $table->id();
             $table->unsignedBigInteger('quiz_id');
             $table->unsignedBigInteger('user_id')->nullable();
-            $table->json('questions_queue');
             $table->integer('correctAnswers')->default(0);
-            $table->json('correct_answers_id')->nullable();
             $table->timestamps();
 
             $table->foreign('quiz_id')->references('id')->on('quizzes')->onDelete('cascade');

@@ -46,7 +46,8 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function findForPassport($name){
+    public function findForPassport($name)
+    {
         return $this->where('email', $name->orWhere('username', $name)->first());
     }
 

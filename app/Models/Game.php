@@ -9,7 +9,7 @@ class Game extends Model
 {
     use HasApiTokens;
 
-    protected $hidden = ['updated_at', 'user_id', 'questions_queue', 'correct_answers_id', 'created_at'];
+    protected $hidden = ['updated_at', 'user_id', 'created_at'];
 
 
     public function user()
