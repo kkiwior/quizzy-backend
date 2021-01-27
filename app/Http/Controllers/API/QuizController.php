@@ -165,7 +165,7 @@ class QuizController extends Controller
             'questions' => 'array|required',
             'questions.*.text' => 'required|string|min:3|max:255',
             'questions.*.answers' => new RequireCorrect,
-            'questions.*.answers.*.text' => 'required|string|min:2|max:200',
+            'questions.*.answers.*.text' => 'required|string|min:1|max:200',
             'questions.*.answers.*.correct' => 'boolean|required'
         ];
     }
